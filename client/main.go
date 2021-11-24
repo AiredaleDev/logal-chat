@@ -16,15 +16,28 @@ func main() {
     }
 
     messageBox := bufio.NewScanner(os.Stdin)
-    reply := []byte{}
+
+    // Listen for responses
+    go func() {
+        fromServer := bufio.NewScanner(conn)
+        var reply string
+        for fromServer.Scan() {
+            reply = fromServer.Text()
+            fmt.Println(reply)
+        }
+        if err := fromServer.Err(); err != nil {
+            log.Fatalln("Listen ERROR:", err)
+        }
+    }()
+
+    // Send messages
+    var message string
     for messageBox.Scan() {
-        message := messageBox.Text()
+        message = messageBox.Text()
         if message == ":q" {
             break
         }
         fmt.Fprintln(conn, message)
-        conn.Read(reply)
-        fmt.Println(string(reply))
     }
 
     if err := messageBox.Err(); err != nil {

@@ -10,6 +10,7 @@ import (
 
 func main() {
     // wow that was easy
+    fmt.Println("Server starting...")
     server, err := net.Listen("tcp", ":6969")
     if err != nil {
         log.Fatalln("ERROR:", err)
