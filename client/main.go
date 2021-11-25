@@ -32,6 +32,7 @@ func main() {
 
     // Send messages
     var message string
+    fmt.Print("Name: ")
     for messageBox.Scan() {
         message = messageBox.Text()
         if message == ":q" {
