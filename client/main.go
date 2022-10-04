@@ -25,9 +25,13 @@ func main() {
             reply = fromServer.Text()
             fmt.Println(reply)
         }
+
         if err := fromServer.Err(); err != nil {
             log.Fatalln("Listen ERROR:", err)
         }
+
+        // we should be here if we got EOF
+        fmt.Println("Server shut down.")
     }()
 
     // Send messages

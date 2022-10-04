@@ -1,3 +1,3 @@
 module github.com/AiredaleDev/logal-chat/client
 
-go 1.17
+go 1.18

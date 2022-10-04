@@ -20,15 +20,21 @@ type (
         scanner *bufio.Scanner
     }
 
-    intSet   map[int]struct{}
+    intSet map[int]struct{}
 )
 
 var (
     messages     = make(chan message)
     clients      = make(map[int]client) // switched from slices for O(1) deletion
-    freedIndices = make(intSet) 
+    freedIndices = make(intSet)
     inSet        = struct{}{} // This should be const, but I can't make this const for some reason.
+
+    quitSignal   = make(chan struct{})
 )
+
+func displayHelp() {
+    fmt.Println("Commands:")
+}
 
 func runActiveConnection(id int, userInfo *client) {
     defer userInfo.conn.Close()
@@ -40,7 +46,7 @@ func runActiveConnection(id int, userInfo *client) {
     var msgBuffer string
     for userInfo.scanner.Scan() {
         msgBuffer = userInfo.scanner.Text()
-        fmt.Println("Got message:", msgBuffer)
+        fmt.Println("Got message:", msgBuffer) // Keeping him here to test encryption
         messages<- message{id, userInfo.name + ": " + msgBuffer}
     }
     if err := userInfo.scanner.Err(); err != nil {
@@ -58,14 +64,42 @@ func main() {
         log.Fatalln("ERROR:", err)
     }
 
-    // TODO: Give us a CLI to interact with the server
-    // go func() {}()
+    // Listen for quit signal
+    go func() {
+        <-quitSignal // Blocks until it gets a quit message
+        fmt.Println("Shutting down...")
+        os.Exit(0) // The whole application. Not just this goroutine.
+    }()
+
+    fmt.Println("Type \"help\" or \"?\" for a list of commands")
+
+    // CLI for server maintenance
+    go func() {
+        cli := bufio.NewScanner(os.Stdin)
+        var cmd string
+        for cli.Scan() {
+            cmd = cli.Text()
+
+            switch cmd {
+            case "q", "quit":
+                quitSignal<- struct{}{} // don't actually send any bytes, we just want to say "suspend/resume"
+            case "h", "help", "?":
+                displayHelp()
+            default:
+                fmt.Println("Unrecognized command. Type \"?\" for a list of commands.")
+            }
+        }
+        if err := cli.Err(); err != nil {
+            log.Fatalln("Unexpected CLI error, if you're reading this I fucked up pretty bad:", err)
+        }
+    }()
 
     // Broadcast messages to all clients as they come in
-    go func () {
+    go func() {
         for {
             newestMessage := <-messages
             for clientID, client := range clients {
+                // TODO: remove when replace with ncurses UI for client
                 if newestMessage.senderID == clientID {
                     continue
                 }
@@ -84,6 +118,7 @@ func main() {
 
         // If a user previously disconnected and we have an unused index,
         // use the first available one.
+        // Maybe repalce with UUIDs?
         newID := -1
         for index := range freedIndices {
             if _, ok := freedIndices[index]; ok {
@@ -108,6 +143,6 @@ func main() {
             go runActiveConnection(newID, &newClient)
         } else {
             fmt.Fprintln(os.Stderr, "Failed to read name...")
-        } 
+        }
     }
 }
