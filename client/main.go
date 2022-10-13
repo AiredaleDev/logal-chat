@@ -1,53 +1,55 @@
 package main
 
 import (
-    "bufio"
-    "fmt"
-    "log"
-    "net"
-    "os"
+	"bufio"
+	"fmt"
+	"log"
+	"net"
+	"os"
+
+	"github.com/AiredaleDev/logal-chat/client/ui"
 )
 
 func main() {
-    conn, err := net.Dial("tcp", ":6969")
-    defer conn.Close()
-    if err != nil {
-        log.Fatalln("ERROR:", err)
-    }
+	ui.Setup()
 
-    messageBox := bufio.NewScanner(os.Stdin)
+	conn, err := net.Dial("tcp", ":6969")
+	defer conn.Close()
+	if err != nil {
+		log.Fatalln("ERROR:", err)
+	}
 
-    // Listen for responses
-    go func() {
-        fromServer := bufio.NewScanner(conn)
-        var reply string
-        for fromServer.Scan() {
-            reply = fromServer.Text()
-            fmt.Println(reply)
-        }
+	messageBox := bufio.NewScanner(os.Stdin)
 
-        if err := fromServer.Err(); err != nil {
-            log.Fatalln("Listen ERROR:", err)
-        }
+	// Listen for responses
+	go func() {
+		fromServer := bufio.NewScanner(conn)
+		for fromServer.Scan() {
+			reply := fromServer.Text()
+			fmt.Println(reply)
+		}
 
-        // we should be here if we got EOF
-        fmt.Println("Server shut down.")
-    }()
+		if err := fromServer.Err(); err != nil {
+			log.Fatalln("Listen ERROR:", err)
+		}
 
-    // Send messages
-    var message string
-    fmt.Print("Name: ")
-    for messageBox.Scan() {
-        message = messageBox.Text()
-        if message == ":q" {
-            break
-        }
-        fmt.Fprintln(conn, message)
-    }
+		// we should be here if we got EOF
+		fmt.Println("Server shut down.")
+	}()
 
-    if err := messageBox.Err(); err != nil {
-        log.Fatalln("ERROR:", err)
-    } else {
-        fmt.Println("Quitting...")
-    }
+	// Send messages
+	fmt.Print("Name: ")
+	for messageBox.Scan() {
+		message := messageBox.Text()
+		if message == ":q" {
+			break
+		}
+		fmt.Fprintln(conn, message)
+	}
+
+	if err := messageBox.Err(); err != nil {
+		log.Fatalln("ERROR:", err)
+	} else {
+		fmt.Println("Quitting...")
+	}
 }

@@ -1,7 +1,9 @@
 package ui
 
-import "fmt"
+import (
+//	tea "github.com/charmbracelet/bubbletea"
+)
 
-func Todo() {
-    fmt.Println("TODO: actually implement this")
+func Setup() {
+
 }
