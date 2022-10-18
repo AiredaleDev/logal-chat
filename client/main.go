@@ -7,12 +7,29 @@ import (
 	"net"
 	"os"
 
-	"github.com/AiredaleDev/logal-chat/client/ui"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
-func main() {
-	ui.Setup()
+// Data:
+type ChatModel struct {
+	MessageHistory []string
+	MessageBox     string
+}
 
+func (cm ChatModel) Init() tea.Cmd {
+	return nil
+}
+
+func (cm ChatModel) Update(tea.Msg) (tea.Model, tea.Cmd) {
+
+	return cm, nil
+}
+
+func (cm ChatModel) View() string {
+	return "based"
+}
+
+func main() {
 	conn, err := net.Dial("tcp", ":6969")
 	defer conn.Close()
 	if err != nil {
